@@ -14,9 +14,9 @@ def serve_homepage():
 
 # Database connection details
 DB_CONFIG = {
-    "host": "172.17.168.79",
-    "user": "Mahi",
-    "password": "Mahi@1992",
+    "host": "MYSQl_host",
+    "user": "username",
+    "password": "password",
     "database": "restaurant_db"
 }
 
