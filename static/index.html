@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Restaurant Orders</title>
+    <style>
+        body {
+            background-image: url('https://wallpapercave.com/wp/wp1874169.jpg');
+            background-size: cover; /* Makes the image cover the whole screen */
+            background-position: center; /* Centers the image */
+            background-repeat: no-repeat; /* Prevents the image from repeating */
+
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            font-style: italic;
+            color: #d34444; /* White color */
+            background-color: #232629; /* Blue background */
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .main-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            max-width: 1600px;
+            margin: auto;
+        }
+
+        .order-form {
+            flex: 2;
+            max-width: 400px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-status {
+            flex: 1;
+            max-width: 1200px;
+            background-color: #f4f4f4;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        select, input, button {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .status-text {
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .order-form, .order-status {
+                max-width: 80%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="restaurantHeader">
+        <h1>Krishna Restaurant</h1>
+        
+    </div>
+
+    <div class="main-container">
+        <!-- Place an Order Section -->
+        <div class="order-form">
+		<h2>Place an Order</h2>
+            <form action="/add_order" method="POST">
+                <label>Restaurant name:</label>
+                <select name="Restaurant_ID" id="restaurantDropdown"></select><br>
+
+                <label>Food Item:</label>
+                <select name="Food_Item" id="foodDropdown"></select><br>
+
+                <label>Quantity:</label>
+                <input type="number" name="Quantity" min="1" value="1"><br>
+
+                <label>Payment Method:</label>
+                <select name="Payment_Method">
+                    <option value="Cash">Cash</option>
+                    <option value="Credit Card">Credit Card</option>
+                    <option value="Online">Online</option>
+                </select><br>
+
+                <button type="submit">Submit Order</button>
+            </form>
+        </div>
+
+        <!-- Order Status Section -->
+        <div class="order-status">
+            <h3>Order Status</h3>
+            <ul id="openOrdersList"></ul>
+            <p><b>Order Number:</b> <span id="orderNumber">---</span></p>
+            <p><b>Open Time:</b> <span id="openTime">---</span></p>
+            <p><b>Done Time:</b> <span id="doneTime">---</span></p>
+            <p class="status-text" id="orderStatus">Open</p>
+            <button onclick="changeStatus('Closed')">Close Orders</button>
+            <button onclick="changeStatus('Cancelled')">Cancel Orders</button>
+        </div>
+    </div>
+
+    <script>
+        function formatTime() {
+            let now = new Date();
+            return now.toLocaleString();
+        }
+
+        function changeStatus(newStatus) {
+            document.getElementById("orderStatus").textContent = newStatus;
+            if (newStatus === "Closed" || newStatus === "Cancelled") {
+                document.getElementById("doneTime").textContent = formatTime();
+            }
+        }
+        // Load restaurant dropdown
+        fetch("http://127.0.0.1:8000/get_restaurants")
+        .then(response => response.json())
+        .then(data => {
+            let dropdown = document.getElementById("restaurantDropdown");
+            data.forEach(item => {
+                let option = document.createElement("option");
+                option.value = item.Restaurant_ID;
+                option.textContent = item.Restaurant_Name;
+                dropdown.appendChild(option);
+            });
+        })
+        .catch(error => console.error("Error fetching restaurant data:", error));
+
+        // Load food item dropdown
+        fetch("http://127.0.0.1:8000/get_food_items")
+        .then(response => response.json())
+        .then(data => {
+            let dropdown = document.getElementById("foodDropdown");
+            data.forEach(item => {
+                let option = document.createElement("option");
+                option.value = item.Food_Item;
+                option.textContent = item.Food_Item;
+                dropdown.appendChild(option);
+            });
+        })
+        .catch(error => console.error("Error fetching food items:", error));
+
+        // Handle form submission
+        document.querySelector("form").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            let formData = new FormData(event.target);
+
+            fetch("http://127.0.0.1:8000/add_order", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || data.error); // Show success or error message
+            })
+            .catch(error => console.error("Error submitting order:", error));
+        });
+
+        // Fetch open orders from the server
+        function fetchOpenOrders() {
+            fetch("http://127.0.0.1:8000/open_orders")
+                .then(response => response.json())
+                .then(data => {
+                    let list = document.getElementById("openOrdersList");
+                    list.innerHTML = ""; // Clear previous list
+
+                    data.open_orders.forEach(order => {
+                    let listItem = document.createElement("li");
+                    listItem.innerHTML = `Order ${order.Order_ID} - Opened: ${order.Order_Date} 
+                    <button onclick="closeOrder(${order.Order_ID})">Close</button>`;
+                    list.appendChild(listItem);
+                });
+            })
+            .catch(error => console.error("Error fetching open orders:", error));
+        }
+        // Change Order Status
+        function closeOrder(orderId) {
+            let formData = new FormData();
+            formData.append("order_id", orderId);
+            formData.append("new_status", "Closed");
+
+            fetch("http://127.0.0.1:8000/update_order_status", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || data.error); // Show success or error message
+                if (!data.error) {
+                fetchOpenOrders(); // Refresh list of open orders
+                fetchOrderStatus(); // Refresh the order status display
+                }
+            })
+            .catch(error => console.error("Error closing order:", error));
+        }
+    // Fetch order status from the server
+        function fetchOrderStatus() {
+        fetch("http://127.0.0.1:8000/order_status")
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("orderNumber").textContent = data.order_number;
+            document.getElementById("openTime").textContent = data.open_time;
+            document.getElementById("doneTime").textContent = data.done_time;
+            document.getElementById("orderStatus").textContent = data.status;
+        })
+        .catch(error => console.error("Error fetching order status:", error));
+    }
+
+
+    function changeStatus(newStatus) {
+        let orderId = document.getElementById("orderNumber").textContent;
+
+        let formData = new FormData();
+        formData.append("order_id", orderId);
+        formData.append("new_status", newStatus);
+
+        fetch("http://127.0.0.1:8000/update_order_status", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message || data.error);
+
+            if (!data.error) {
+                document.getElementById("orderStatus").textContent = newStatus;
+                // Update done time for both Closed and Cancelled statuses
+
+                if (newStatus === "Closed" || newStatus === "Cancelled") {
+                    document.getElementById("doneTime").textContent = formatTime();
+                }
+                fetchOpenOrders();  // Refresh open orders list
+                fetchOrderStatus(); // Ensure updated order status is displayed
+            }
+        })
+        .catch(error => console.error("Error updating order status:", error));
+    }
+    // Fetch order status on page load
+    window.onload = function() {
+        fetchOpenOrders();
+        fetchOrderStatus();
+    };
+    </script>
+</body>
+</html>
