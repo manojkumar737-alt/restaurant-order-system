@@ -19,7 +19,7 @@ class MyHandler(BaseHTTPRequestHandler):
                 response = json.dumps({"message": "Welcome to the Restaurant API!"})
             # Database connection for other endpoints
 
-            db = mysql.connector.connect(host="172.17.168.79", user="Mahi", password="Mahi@1992", database="restaurant_db", ssl_disabled=True)
+            db = mysql.connector.connect(host="mysql_host", user="mysqluser", password="Mysqlpassword", database="restaurant_db", ssl_disabled=True)
             cursor = db.cursor(dictionary=True)
         # Fetch restaurant data
                        
